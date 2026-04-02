@@ -243,12 +243,16 @@ body[data-theme="light"] .theme-switch-track {
 }
 
 .btn-ghost {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
   border-color: rgba(255, 255, 255, 0.24);
   color: var(--text);
 }
 
 .btn-ghost:hover {
   border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .hero {
@@ -1022,6 +1026,96 @@ body[data-theme="light"] .metric-icon {
   color: #95b0ff;
 }
 
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(4px);
+}
+
+.modal-dialog {
+  position: relative;
+  width: min(92vw, 520px);
+  max-height: min(92vh, 640px);
+  overflow: auto;
+  border: 1px solid #2f3f5f;
+  background: #0b0f17;
+  border-radius: var(--radius);
+  padding: 1.25rem 1.35rem 1.1rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.modal-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.modal-lead {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.confirm-summary {
+  margin: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.confirm-summary dt {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #9db6ff;
+  margin: 0;
+}
+
+.confirm-summary dd {
+  margin: 0.15rem 0 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.modal-actions {
+  margin-top: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+body[data-theme="light"] .modal-dialog {
+  background: #ffffff;
+  border-color: #d7e0f4;
+  box-shadow: 0 24px 60px rgba(20, 35, 80, 0.18);
+}
+
+body[data-theme="light"] .modal-backdrop {
+  background: rgba(15, 23, 42, 0.35);
+}
+
+body[data-theme="light"] .confirm-summary dt {
+  color: #4b5b7a;
+}
+
 .result-strip {
   margin-top: 1rem;
   display: grid;
@@ -1122,6 +1216,7 @@ body[data-theme="light"] .menu a.active {
 body[data-theme="light"] .btn-ghost {
   border-color: rgba(20, 35, 80, 0.22);
   color: var(--text);
+  background: transparent;
 }
 
 body[data-theme="light"] .mobile-menu-btn {
@@ -1137,6 +1232,7 @@ body[data-theme="light"] .btn-kakao {
 
 body[data-theme="light"] .btn-ghost:hover {
   border-color: rgba(20, 35, 80, 0.5);
+  background: rgba(20, 35, 80, 0.06);
 }
 
 body[data-theme="light"] .tag,

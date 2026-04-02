@@ -135,12 +135,13 @@
             </span>
             <span class="theme-switch-text theme-switch-text--light">흰색</span>
           </label>
-          <a
-            href="https://pf.kakao.com/_bcxgxdX"
+          <button
+            type="button"
             class="btn btn-kakao"
-            target="_blank"
-            rel="noopener noreferrer"
-          >카카오톡 문의</a>
+            onclick="openKakaoChat()"
+          >
+            카카오톡 문의하기
+          </button>
         </div>
       </div>
     </header>
@@ -1001,6 +1002,51 @@
       </div>
     </footer>
 
+    <div
+      id="contactConfirmModal"
+      class="modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirmModalTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-backdrop" data-modal-close="true" tabindex="-1"></div>
+      <div class="modal-dialog">
+        <h2 id="confirmModalTitle" class="modal-title">전송 내용 확인</h2>
+        <p class="modal-lead">아래 내용으로 문의를 보낼까요?</p>
+        <dl id="confirmSummary" class="confirm-summary"></dl>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="confirmCancel">수정하기</button>
+          <button type="button" class="btn btn-primary" id="confirmSend">전송하기</button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="emailInvalidModal"
+      class="modal"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="emailInvalidModalTitle"
+      aria-hidden="true"
+    >
+      <div class="modal-backdrop" data-modal-close="true" tabindex="-1"></div>
+      <div class="modal-dialog">
+        <h2 id="emailInvalidModalTitle" class="modal-title">이메일 형식</h2>
+        <p class="modal-lead" id="emailInvalidModalMessage">
+          올바른 이메일 주소를 입력해주세요. (예: name@company.com)
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-primary" id="emailInvalidOk">
+            확인
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

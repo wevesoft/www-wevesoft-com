@@ -8,6 +8,11 @@ const mobileMenu = document.getElementById("mobileMenu");
 const THEME_KEY = "weve-theme";
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/xaqlbypl";
 
+/** 카카오 JavaScript 키 — 카카오 디벨로퍼스에서 발급한 값으로 바꿔주세요. */
+const KAKAO_JS_KEY = "YOUR_JS_KEY";
+const KAKAO_CHANNEL_PUBLIC_ID = "_bcxgxdX";
+const KAKAO_CHAT_FALLBACK_URL = "https://pf.kakao.com/_bcxgxdX/chat";
+
 function positionMobileMenu() {
   if (!mobileMenu) return;
   const header = document.querySelector(".header");
@@ -204,6 +209,24 @@ function formatKoreanPhone(value) {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
 
+function getServiceLabel(service) {
+  return (
+    {
+      automation: "자동화 서비스 구축",
+      si: "SI(시스템 통합)",
+      ai: "AI 개발",
+      all: "통합 컨설팅",
+      other: "기타",
+    }[service] || service
+  );
+}
+
+function isValidEmailFormat(email) {
+  const s = String(email || "").trim();
+  if (!s) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
 if (form) {
   const phoneInput = form.querySelector('input[name="phone"]');
   const submitBtn = form.querySelector('button[type="submit"]');
@@ -211,6 +234,15 @@ if (form) {
   const serviceInput = form.querySelector('select[name="service"]');
   const messageInput = form.querySelector('textarea[name="message"]');
   const agreeInput = form.querySelector('input[name="agree"]');
+  const emailInput = form.querySelector('input[name="email"]');
+  const confirmModal = document.getElementById("contactConfirmModal");
+  const confirmSummary = document.getElementById("confirmSummary");
+  const confirmCancel = document.getElementById("confirmCancel");
+  const confirmSend = document.getElementById("confirmSend");
+  const emailInvalidModal = document.getElementById("emailInvalidModal");
+  const emailInvalidOk = document.getElementById("emailInvalidOk");
+
+  let pendingPayload = null;
 
   const updateSubmitState = () => {
     if (!submitBtn) return;
@@ -222,6 +254,104 @@ if (form) {
     const agreed = Boolean(agreeInput?.checked);
     submitBtn.disabled = !(nameFilled && phoneFilled && serviceFilled && messageFilled && agreed);
   };
+
+  function fillConfirmSummary(payload) {
+    if (!confirmSummary) return;
+    confirmSummary.replaceChildren();
+    const rows = [
+      ["담당자명", payload.name],
+      ["연락처", payload.phone],
+      ["이메일", payload.email ? payload.email : "(없음)"],
+      ["관심 서비스", getServiceLabel(payload.service)],
+      ["문의 내용", payload.message],
+      ["개인정보 동의", payload.agree ? "동의" : "미동의"],
+    ];
+    rows.forEach(([label, value]) => {
+      const dt = document.createElement("dt");
+      dt.textContent = label;
+      const dd = document.createElement("dd");
+      dd.textContent = value;
+      confirmSummary.append(dt, dd);
+    });
+  }
+
+  function openConfirmModal() {
+    if (!confirmModal) return;
+    confirmModal.hidden = false;
+    confirmModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    confirmSend?.focus();
+  }
+
+  function closeConfirmModal() {
+    if (!confirmModal) return;
+    confirmModal.hidden = true;
+    confirmModal.setAttribute("aria-hidden", "true");
+    if (emailInvalidModal?.hidden !== false) {
+      document.body.style.overflow = "";
+    }
+    pendingPayload = null;
+    submitBtn?.focus();
+  }
+
+  function openEmailInvalidModal() {
+    if (!emailInvalidModal) return;
+    emailInvalidModal.hidden = false;
+    emailInvalidModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    emailInvalidOk?.focus();
+  }
+
+  function closeEmailInvalidModal() {
+    if (!emailInvalidModal) return;
+    emailInvalidModal.hidden = true;
+    emailInvalidModal.setAttribute("aria-hidden", "true");
+    if (confirmModal?.hidden !== false) {
+      document.body.style.overflow = "";
+    }
+    emailInput?.focus();
+  }
+
+  async function sendToFormspree(payload) {
+    const serviceLabel = getServiceLabel(payload.service);
+    const formspreeBody = {
+      _subject: `[위브소프트 문의] ${payload.name} · ${serviceLabel}`,
+      name: payload.name,
+      phone: payload.phone,
+      service: serviceLabel,
+      message: payload.message,
+      agree: payload.agree ? "동의" : "미동의",
+      createdAt: payload.createdAt,
+    };
+    if (payload.email) {
+      formspreeBody.email = payload.email;
+    }
+
+    const response = await fetch(FORMSPREE_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formspreeBody),
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const msg =
+        (result && result.error) ||
+        (Array.isArray(result.errors) && result.errors[0] && result.errors[0].message) ||
+        "전송에 실패했습니다. 잠시 후 다시 시도해주세요.";
+      formMessage.textContent = msg;
+      return false;
+    }
+
+    form.reset();
+    formMessage.textContent = "문의가 정상 접수되었습니다. 빠르게 연락드리겠습니다.";
+    updateSubmitState();
+    return true;
+  }
 
   if (phoneInput) {
     phoneInput.addEventListener("input", (event) => {
@@ -239,7 +369,7 @@ if (form) {
   });
   updateSubmitState();
 
-  form.addEventListener("submit", async (event) => {
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
 
     const formData = new FormData(form);
@@ -264,60 +394,90 @@ if (form) {
       return;
     }
 
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if (submitBtn) submitBtn.disabled = true;
-    formMessage.textContent = "전송 중입니다…";
-
-    const serviceLabel = {
-      automation: "자동화 서비스 구축",
-      si: "SI(시스템 통합)",
-      ai: "AI 개발",
-      all: "통합 컨설팅",
-      other: "기타",
-    }[payload.service] || payload.service;
-
-    const formspreeBody = {
-      _subject: `[위브소프트 문의] ${payload.name} · ${serviceLabel}`,
-      name: payload.name,
-      phone: payload.phone,
-      service: serviceLabel,
-      message: payload.message,
-      agree: payload.agree ? "동의" : "미동의",
-      createdAt: payload.createdAt,
-    };
-    if (payload.email) {
-      formspreeBody.email = payload.email;
+    if (!isValidEmailFormat(payload.email)) {
+      formMessage.textContent = "";
+      openEmailInvalidModal();
+      return;
     }
 
+    pendingPayload = payload;
+    fillConfirmSummary(payload);
+    formMessage.textContent = "";
+    openConfirmModal();
+  });
+
+  confirmCancel?.addEventListener("click", () => {
+    closeConfirmModal();
+  });
+
+  confirmModal?.addEventListener("click", (event) => {
+    const target = event.target;
+    if (target && target.dataset && target.dataset.modalClose === "true") {
+      closeConfirmModal();
+    }
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (emailInvalidModal && !emailInvalidModal.hidden) {
+      closeEmailInvalidModal();
+      return;
+    }
+    if (confirmModal && !confirmModal.hidden) {
+      closeConfirmModal();
+    }
+  });
+
+  emailInvalidOk?.addEventListener("click", () => {
+    closeEmailInvalidModal();
+  });
+
+  emailInvalidModal?.addEventListener("click", (event) => {
+    const target = event.target;
+    if (target && target.dataset && target.dataset.modalClose === "true") {
+      closeEmailInvalidModal();
+    }
+  });
+
+  confirmSend?.addEventListener("click", async () => {
+    if (!pendingPayload) return;
+    confirmSend.disabled = true;
+    formMessage.textContent = "전송 중입니다…";
     try {
-      const response = await fetch(FORMSPREE_ENDPOINT, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formspreeBody),
-      });
-
-      const result = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const msg =
-          (result && result.error) ||
-          (Array.isArray(result.errors) && result.errors[0] && result.errors[0].message) ||
-          "전송에 실패했습니다. 잠시 후 다시 시도해주세요.";
-        formMessage.textContent = msg;
-        return;
+      const ok = await sendToFormspree(pendingPayload);
+      if (ok) {
+        closeConfirmModal();
       }
-
-      form.reset();
-      formMessage.textContent = "문의가 정상 접수되었습니다. 빠르게 연락드리겠습니다.";
     } catch (error) {
       console.error(error);
       formMessage.textContent =
         "전송 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
     } finally {
+      confirmSend.disabled = false;
       updateSubmitState();
     }
   });
+}
+
+function openKakaoChat() {
+  if (typeof Kakao === "undefined") {
+    window.open(KAKAO_CHAT_FALLBACK_URL, "_blank", "noopener,noreferrer");
+    return;
+  }
+  const key = KAKAO_JS_KEY && KAKAO_JS_KEY !== "YOUR_JS_KEY" ? KAKAO_JS_KEY : "";
+  if (!key) {
+    window.open(KAKAO_CHAT_FALLBACK_URL, "_blank", "noopener,noreferrer");
+    return;
+  }
+  try {
+    if (!Kakao.isInitialized()) {
+      Kakao.init(key);
+    }
+    Kakao.Channel.chat({
+      channelPublicId: KAKAO_CHANNEL_PUBLIC_ID,
+    });
+  } catch (err) {
+    console.warn(err);
+    window.open(KAKAO_CHAT_FALLBACK_URL, "_blank", "noopener,noreferrer");
+  }
 }
