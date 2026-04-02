@@ -9,7 +9,7 @@ const THEME_KEY = "weve-theme";
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/xaqlbypl";
 
 /** 카카오 JavaScript 키 — 카카오 디벨로퍼스에서 발급한 값으로 바꿔주세요. */
-const KAKAO_JS_KEY = "YOUR_JS_KEY";
+const KAKAO_JS_KEY = "8005e97f4f3a7da00e3c0e2f104efc70";
 const KAKAO_CHANNEL_PUBLIC_ID = "_bcxgxdX";
 const KAKAO_CHAT_FALLBACK_URL = "https://pf.kakao.com/_bcxgxdX/chat";
 
