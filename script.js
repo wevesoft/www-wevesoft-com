@@ -460,15 +460,15 @@ if (form) {
 }
 
 function openKakaoChat() {
-  if (typeof Kakao === "undefined") {
-    window.open(KAKAO_CHAT_FALLBACK_URL, "_blank", "noopener,noreferrer");
-    return;
-  }
-  const key = KAKAO_JS_KEY && KAKAO_JS_KEY !== "YOUR_JS_KEY" ? KAKAO_JS_KEY : "";
-  if (!key) {
-    window.open(KAKAO_CHAT_FALLBACK_URL, "_blank", "noopener,noreferrer");
-    return;
-  }
+  // if (typeof Kakao === "undefined") {
+  //   window.open(KAKAO_CHAT_FALLBACK_URL, "_blank", "noopener,noreferrer");
+  //   return;
+  // }
+  // const key = KAKAO_JS_KEY && KAKAO_JS_KEY !== "YOUR_JS_KEY" ? KAKAO_JS_KEY : "";
+  // if (!key) {
+  //   window.open(KAKAO_CHAT_FALLBACK_URL, "_blank", "noopener,noreferrer");
+  //   return;
+  // }
   try {
     if (!Kakao.isInitialized()) {
       Kakao.init(key);
